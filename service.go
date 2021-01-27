@@ -105,6 +105,9 @@ Loop:
 			}
 		}
 	}
+	if err := os.Chmod(self, 0755); err != nil {
+		return err
+	}
 
 	if err := s.Restart(); err != nil {
 		return err

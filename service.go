@@ -40,11 +40,14 @@ func (s *Service) Update() error {
 		return fmt.Errorf("No update url provided")
 	}
 
-	path, err := os.Executable()
+	self, err := os.Executable()
 	if err != nil {
 		return err
 	}
-	path = filepath.Dir(path)
+	if err := os.Rename(self, self+"~"); err != nil {
+		return err
+	}
+	path := filepath.Dir(self)
 
 	resp, err := http.Get(s.Options.UpdateURL)
 	if err != nil {
@@ -103,5 +106,12 @@ Loop:
 		}
 	}
 
-	return s.Restart()
+	if err := s.Restart(); err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(self); err == nil {
+		return os.Remove(self + "~")
+	}
+	return nil
 }

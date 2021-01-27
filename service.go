@@ -1,14 +1,13 @@
 package service
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/sunshineplan/utils/archive"
 )
 
 var defaultName = "Service"
@@ -52,24 +51,15 @@ func (s *Service) Update() error {
 	}
 	defer resp.Body.Close()
 
-	gr, err := gzip.NewReader(resp.Body)
+	files, err := archive.Unpack(resp.Body)
 	if err != nil {
 		return err
 	}
 
-	tr := tar.NewReader(gr)
-
 Loop:
-	for {
-		header, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
+	for _, file := range files {
 		for _, pattern := range s.Options.ExcludeFiles {
-			matched, err := filepath.Match(pattern, header.Name)
+			matched, err := filepath.Match(pattern, file.Name)
 			if err != nil {
 				return err
 			}
@@ -78,10 +68,8 @@ Loop:
 			}
 		}
 
-		target := filepath.Join(path, header.Name)
-
-		switch header.Typeflag {
-		case tar.TypeDir:
+		target := filepath.Join(path, file.Name)
+		if file.IsDir {
 			dir, err := os.Stat(target)
 			if err != nil {
 				if os.IsNotExist(err) {
@@ -95,22 +83,22 @@ Loop:
 			} else if !dir.IsDir() {
 				return fmt.Errorf("Cannot create directory %q: File exists", target)
 			}
-		case tar.TypeReg:
+		} else {
+			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+				return err
+			}
+
 			log.Printf("Updating file %s", target)
 			f, err := os.Create(target)
 			if err != nil {
 				return err
 			}
-			if _, err := io.Copy(f, tr); err != nil {
+			if _, err := f.Write(file.Body); err != nil {
 				return err
 			}
-			f.Close()
-
-		default:
-			log.Printf(
-				"ExtractTarGz: uknown type: %v in %s",
-				header.Typeflag,
-				header.Name)
+			if err := f.Close(); err != nil {
+				return err
+			}
 		}
 	}
 

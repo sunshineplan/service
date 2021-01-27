@@ -44,6 +44,7 @@ func (s *Service) Update() error {
 	if err != nil {
 		return err
 	}
+	path = filepath.Dir(path)
 
 	resp, err := http.Get(s.Options.UpdateURL)
 	if err != nil {

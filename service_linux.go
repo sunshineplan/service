@@ -63,6 +63,7 @@ func (s *Service) Install() error {
 
 // Remove removes the service.
 func (s *Service) Remove() error {
+	s.shell("stop")
 	err := s.shell("disable")
 	if err != nil {
 		return err

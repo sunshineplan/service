@@ -40,15 +40,6 @@ func (s *Service) Update() error {
 		return fmt.Errorf("No update url provided")
 	}
 
-	self, err := os.Executable()
-	if err != nil {
-		return err
-	}
-	if err := os.Rename(self, self+"~"); err != nil {
-		return err
-	}
-	path := filepath.Dir(self)
-
 	resp, err := http.Get(s.Options.UpdateURL)
 	if err != nil {
 		return err
@@ -59,6 +50,15 @@ func (s *Service) Update() error {
 	if err != nil {
 		return err
 	}
+
+	self, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	if err := os.Rename(self, self+"~"); err != nil {
+		return err
+	}
+	path := filepath.Dir(self)
 
 Loop:
 	for _, file := range files {

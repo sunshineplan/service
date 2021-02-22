@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/sunshineplan/utils/archive"
 )
@@ -105,6 +106,7 @@ Loop:
 			}
 		}
 	}
+
 	if err := os.Chmod(self, 0755); err != nil {
 		return err
 	}
@@ -114,7 +116,10 @@ Loop:
 	}
 
 	if _, err := os.Stat(self); err == nil {
+		time.Sleep(time.Second)
+
 		return os.Remove(self + "~")
 	}
+
 	return nil
 }

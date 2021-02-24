@@ -1,13 +1,16 @@
 package service
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/sunshineplan/utils/archive"
+	"github.com/sunshineplan/utils/progressbar"
 )
 
 var defaultName = "Service"
@@ -46,7 +49,19 @@ func (s *Service) Update() error {
 	}
 	defer resp.Body.Close()
 
-	files, err := archive.Unpack(resp.Body)
+	total, err := strconv.Atoi(resp.Header.Get("content-length"))
+	if err != nil {
+		return err
+	}
+
+	var b bytes.Buffer
+	pb := progressbar.New(total).SetUnit("bytes")
+	if _, err := pb.FromReader(resp.Body, &b); err != nil {
+		return err
+	}
+	<-pb.Done
+
+	files, err := archive.Unpack(&b)
 	if err != nil {
 		return err
 	}

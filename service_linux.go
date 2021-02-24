@@ -41,7 +41,8 @@ func (s *Service) Install() error {
 	if err != nil {
 		return err
 	}
-	var format = &struct {
+
+	format := struct {
 		Description  string
 		Path         string
 		Dependencies []string
@@ -58,16 +59,18 @@ func (s *Service) Install() error {
 	if err := template.Must(template.New("").Parse(systemdScript)).Execute(f, format); err != nil {
 		return err
 	}
+
 	return s.shell("enable")
 }
 
 // Remove removes the service.
 func (s *Service) Remove() error {
 	s.shell("stop")
-	err := s.shell("disable")
-	if err != nil {
+
+	if err := s.shell("disable"); err != nil {
 		return err
 	}
+
 	return os.Remove(s.unitFile())
 }
 
@@ -102,8 +105,10 @@ func (s *Service) shell(action string) error {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			return fmt.Errorf("Run %q failed: %s", action, exiterr.Stderr)
 		}
+
 		return fmt.Errorf("Execute %q failed: %v", action, err)
 	}
+
 	return nil
 }
 

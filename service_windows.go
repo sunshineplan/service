@@ -17,9 +17,12 @@ var elog debug.Log
 // and the service will exit once Execute completes.
 func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, status chan<- svc.Status) (svcSpecificEC bool, exitCode uint32) {
 	status <- svc.Status{State: svc.Running, Accepts: svc.AcceptStop | svc.AcceptShutdown}
+
 	elog.Info(1, fmt.Sprintf("Service %s started.", s.Name))
+
 	go s.Exec()
-loop:
+
+Loop:
 	for {
 		c := <-r
 		switch c.Cmd {
@@ -29,12 +32,14 @@ loop:
 			status <- c.CurrentStatus
 		case svc.Stop, svc.Shutdown:
 			elog.Info(1, fmt.Sprintf("Stopping %s service(%d).", s.Name, c.Context))
-			break loop
+			break Loop
 		default:
 			elog.Error(1, fmt.Sprintf("Unexpected control request #%d", c))
 		}
 	}
+
 	status <- svc.Status{State: svc.StopPending}
+
 	return
 }
 
@@ -44,6 +49,7 @@ func (s *Service) Install() error {
 	if err != nil {
 		return err
 	}
+
 	m, err := mgr.Connect()
 	if err != nil {
 		return err
@@ -55,6 +61,7 @@ func (s *Service) Install() error {
 		service.Close()
 		return fmt.Errorf("service %s already exists", s.Name)
 	}
+
 	if s.Desc == "" {
 		s.Desc = s.Name
 	}
@@ -71,6 +78,7 @@ func (s *Service) Install() error {
 		service.Delete()
 		return fmt.Errorf("SetupEventLogSource() failed: %s", err)
 	}
+
 	return nil
 }
 
@@ -91,6 +99,7 @@ func (s *Service) Remove() error {
 	if err := service.Delete(); err != nil {
 		return err
 	}
+
 	return eventlog.Remove(s.Name)
 }
 
@@ -108,14 +117,17 @@ func (s *Service) Run(isDebug bool) {
 	defer elog.Close()
 
 	elog.Info(1, fmt.Sprintf("Starting %s service.", s.Name))
+
 	run := svc.Run
 	if isDebug {
 		run = debug.Run
 	}
+
 	if err := run(s.Name, s); err != nil {
 		elog.Error(1, fmt.Sprintf("Run %s service failed: %v", s.Name, err))
 		return
 	}
+
 	elog.Info(1, fmt.Sprintf("%s service stopped.", s.Name))
 }
 
@@ -149,21 +161,26 @@ func (s *Service) Stop() error {
 		return fmt.Errorf("could not access service: %v", err)
 	}
 	defer service.Close()
+
 	status, err := service.Control(svc.Stop)
 	if err != nil {
 		return fmt.Errorf("could not send control=%d: %v", svc.Stop, err)
 	}
+
 	timeout := time.Now().Add(10 * time.Second)
 	for status.State != svc.Stopped {
 		if timeout.Before(time.Now()) {
 			return fmt.Errorf("timeout waiting for service to go to state=%d", svc.Stopped)
 		}
+
 		time.Sleep(300 * time.Millisecond)
+
 		status, err = service.Query()
 		if err != nil {
 			return fmt.Errorf("could not retrieve service status: %v", err)
 		}
 	}
+
 	return nil
 }
 
@@ -172,6 +189,7 @@ func (s *Service) Restart() error {
 	if err := s.Stop(); err != nil {
 		return err
 	}
+
 	return s.Start()
 }
 
@@ -179,5 +197,6 @@ func (s *Service) Restart() error {
 // as a service.
 func IsWindowsService() bool {
 	is, _ := svc.IsWindowsService()
+
 	return is
 }

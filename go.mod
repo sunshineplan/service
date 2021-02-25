@@ -1,4 +1,4 @@
-module service
+module github.com/sunshineplan/service
 
 go 1.16
 

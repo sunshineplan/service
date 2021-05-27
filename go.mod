@@ -3,6 +3,6 @@ module github.com/sunshineplan/service
 go 1.16
 
 require (
-	github.com/sunshineplan/utils v0.0.0-20210224010154-f102cd242d60
-	golang.org/x/sys v0.0.0-20210223212115-eede4237b368
+	github.com/sunshineplan/utils v0.0.0-20210508081115-49f48cf588e1
+	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea
 )

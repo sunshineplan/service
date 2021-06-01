@@ -60,14 +60,14 @@ func (s *Service) Install() error {
 		return err
 	}
 
-	return s.shell("enable")
+	return s.cmd("enable")
 }
 
 // Remove removes the service.
 func (s *Service) Remove() error {
-	s.shell("stop")
+	s.cmd("stop")
 
-	if err := s.shell("disable"); err != nil {
+	if err := s.cmd("disable"); err != nil {
 		return err
 	}
 
@@ -81,32 +81,32 @@ func (s *Service) Run(isDebug bool) {
 
 // Start starts the service.
 func (s *Service) Start() error {
-	return s.shell("start")
+	return s.cmd("start")
 }
 
 // Stop stops the service.
 func (s *Service) Stop() error {
-	return s.shell("stop")
+	return s.cmd("stop")
 }
 
 // Restart restarts the service.
 func (s *Service) Restart() error {
-	return s.shell("restart")
+	return s.cmd("restart")
 }
 
-func (s *Service) shell(action string) error {
+func (s *Service) cmd(action string) error {
 	cmd := exec.Command("systemctl", action, strings.ToLower(s.Name))
 
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("Execute %q failed: %v", action, err)
+		return fmt.Errorf("execute %q failed: %v", action, err)
 	}
 
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
-			return fmt.Errorf("Run %q failed: %s", action, exiterr.Stderr)
+			return fmt.Errorf("run %q failed: %s", action, exiterr.Stderr)
 		}
 
-		return fmt.Errorf("Execute %q failed: %v", action, err)
+		return fmt.Errorf("execute %q failed: %v", action, err)
 	}
 
 	return nil

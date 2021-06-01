@@ -40,7 +40,7 @@ func New() *Service {
 // Update updates the service's installed files.
 func (s *Service) Update() error {
 	if s.Options.UpdateURL == "" {
-		return fmt.Errorf("No update url provided")
+		return fmt.Errorf("no update url provided")
 	}
 
 	resp, err := http.Get(s.Options.UpdateURL)
@@ -100,7 +100,7 @@ Loop:
 					return err
 				}
 			} else if !dir.IsDir() {
-				return fmt.Errorf("Cannot create directory %q: File exists", target)
+				return fmt.Errorf("cannot create directory %q: file exists", target)
 			}
 		} else {
 			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {

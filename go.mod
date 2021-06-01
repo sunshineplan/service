@@ -4,5 +4,5 @@ go 1.16
 
 require (
 	github.com/sunshineplan/utils v0.0.0-20210508081115-49f48cf588e1
-	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea
+	golang.org/x/sys v0.0.0-20210601080250-7ecdf8ef093b
 )

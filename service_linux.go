@@ -2,20 +2,18 @@ package service
 
 import (
 	"fmt"
-	"html/template"
 	"os"
 	"os/exec"
 	"strings"
+	"text/template"
 )
 
 const systemdScript = `[Unit]
 Description={{.Description}}
 {{range .Dependencies}}{{println .}}{{end}}
-
 [Service]
-ExecStart={{.Path}} {{.Arguments}}
+ExecStart={{.Path}}{{range .Arguments}} {{.}}{{end}}
 {{range .Others}}{{println .}}{{end}}
-
 [Install]
 WantedBy=multi-user.target
 `
@@ -46,7 +44,7 @@ func (s *Service) Install() error {
 		Description  string
 		Path         string
 		Dependencies []string
-		Arguments    string
+		Arguments    []string
 		Others       []string
 	}{
 		s.Desc,

@@ -2,11 +2,10 @@ package service
 
 import (
 	"fmt"
-	"html/template"
 	"os"
 	"os/exec"
 	"strings"
-	"time"
+	"text/template"
 )
 
 const launchdPlist = `<?xml version="1.0" encoding="UTF-8"?>
@@ -17,31 +16,31 @@ const launchdPlist = `<?xml version="1.0" encoding="UTF-8"?>
     <string>{{html .Name}}</string>
     <key>ProgramArguments</key>
     <array>
-      <string>{{html .Path}}</string>
-      <string>{{html .Arguments}}</string>
+      <string>{{html .Path}}</string>{{range .Arguments}}
+      <string>{{html .}}</string>{{end}}
     </array>
-    <key>KeepAlive</key>
+    <key>RunAtLoad</key>
     <true/>
   </dict>
 </plist>
 `
 
-func (s *Service) getServiceFilePath() (string, error) {
-	return "/Library/LaunchDaemons/" + s.Name + ".plist", nil
+func (s *Service) getPlistPath() (string, error) {
+	return "~/Library/LaunchDaemons/" + strings.ToLower(s.Name) + ".plist", nil
 }
 
 // Install installs the service.
 func (s *Service) Install() error {
-	confPath, err := s.getServiceFilePath()
+	plistPath, err := s.getPlistPath()
 	if err != nil {
 		return err
 	}
 
-	if _, err := os.Stat(confPath); err == nil {
-		return fmt.Errorf("Service %s exists", confPath)
+	if _, err := os.Stat(plistPath); err == nil {
+		return fmt.Errorf("plist %s exists", plistPath)
 	}
 
-	f, err := os.OpenFile(confPath, os.O_WRONLY|os.O_CREATE, 0644)
+	f, err := os.OpenFile(plistPath, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
@@ -55,26 +54,32 @@ func (s *Service) Install() error {
 	format := struct {
 		Name      string
 		Path      string
-		Arguments string
+		Arguments []string
 	}{
 		strings.ToLower(s.Name),
 		path,
 		s.Options.Arguments,
 	}
 
-	return template.Must(template.New("").Parse(launchdPlist)).Execute(f, format)
+	if err := template.Must(template.New("").Parse(launchdPlist)).Execute(f, format); err != nil {
+		return err
+	}
+
+	return launchctl("bootstrap", "gui/$(id -u)", plistPath)
 }
 
 // Remove removes the service.
 func (s *Service) Remove() error {
-	s.Stop()
+	if err := launchctl("bootout", "gui/$(id -u)/"+strings.ToLower(s.Name)); err != nil {
+		return err
+	}
 
-	confPath, err := s.getServiceFilePath()
+	plistPath, err := s.getPlistPath()
 	if err != nil {
 		return err
 	}
 
-	return os.Remove(confPath)
+	return os.Remove(plistPath)
 }
 
 // Run runs the service.
@@ -84,32 +89,21 @@ func (s *Service) Run(isDebug bool) {
 
 // Start starts the service.
 func (s *Service) Start() error {
-	return s.cmd("load")
+	return launchctl("kickstart", "gui/$(id -u)/"+strings.ToLower(s.Name))
 }
 
 // Stop stops the service.
 func (s *Service) Stop() error {
-	return s.cmd("unload")
+	return launchctl("kill", "SIGKILL", "gui/$(id -u)/"+strings.ToLower(s.Name))
 }
 
 // Restart restarts the service.
 func (s *Service) Restart() error {
-	if err := s.Stop(); err != nil {
-		return err
-	}
-
-	time.Sleep(time.Second)
-
-	return s.Start()
+	return launchctl("kickstart", "-k", "gui/$(id -u)/"+strings.ToLower(s.Name))
 }
 
-func (s *Service) cmd(action string) error {
-	confPath, err := s.getServiceFilePath()
-	if err != nil {
-		return err
-	}
-
-	cmd := exec.Command("launchctl", action, confPath)
+func launchctl(arg ...string) error {
+	cmd := exec.Command("launchctl", arg...)
 
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("execute %q failed: %v", cmd.String(), err)

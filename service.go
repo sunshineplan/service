@@ -26,7 +26,7 @@ type Service struct {
 // Options is Service options
 type Options struct {
 	Dependencies []string
-	Arguments    string
+	Arguments    []string
 	Others       []string
 	UpdateURL    string
 	ExcludeFiles []string

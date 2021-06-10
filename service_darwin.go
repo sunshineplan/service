@@ -26,7 +26,7 @@ const launchdPlist = `<?xml version="1.0" encoding="UTF-8"?>
 `
 
 func (s *Service) getPlistPath() (string, error) {
-	homeDir, err := UserHomeDir()
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}

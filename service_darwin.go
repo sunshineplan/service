@@ -26,7 +26,12 @@ const launchdPlist = `<?xml version="1.0" encoding="UTF-8"?>
 `
 
 func (s *Service) getPlistPath() (string, error) {
-	return "~/Library/LaunchDaemons/" + strings.ToLower(s.Name) + ".plist", nil
+	homeDir, err := UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	return homeDir + "/Library/LaunchDaemons/" + strings.ToLower(s.Name) + ".plist", nil
 }
 
 // Install installs the service.

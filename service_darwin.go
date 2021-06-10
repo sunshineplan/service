@@ -31,7 +31,7 @@ func (s *Service) getPlistPath() (string, error) {
 		return "", err
 	}
 
-	return homeDir + "/Library/LaunchDaemons/" + strings.ToLower(s.Name) + ".plist", nil
+	return homeDir + "/Library/LaunchAgents/" + strings.ToLower(s.Name) + ".plist", nil
 }
 
 // Install installs the service.

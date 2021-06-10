@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/user"
 	"strings"
 	"text/template"
 )
@@ -25,18 +26,18 @@ const launchdPlist = `<?xml version="1.0" encoding="UTF-8"?>
 </plist>
 `
 
-func (s *Service) getPlistPath() (string, error) {
-	homeDir, err := os.UserHomeDir()
+func (s *Service) getInfo() (string, string, error) {
+	u, err := user.Current()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return homeDir + "/Library/LaunchAgents/" + strings.ToLower(s.Name) + ".plist", nil
+	return u.Uid, u.HomeDir + "/Library/LaunchAgents/" + strings.ToLower(s.Name) + ".plist", nil
 }
 
 // Install installs the service.
 func (s *Service) Install() error {
-	plistPath, err := s.getPlistPath()
+	uid, plistPath, err := s.getInfo()
 	if err != nil {
 		return err
 	}
@@ -70,17 +71,17 @@ func (s *Service) Install() error {
 		return err
 	}
 
-	return launchctl("bootstrap", "gui/$(id -u)", plistPath)
+	return launchctl("bootstrap", "gui/"+uid, plistPath)
 }
 
 // Remove removes the service.
 func (s *Service) Remove() error {
-	if err := launchctl("bootout", "gui/$(id -u)/"+strings.ToLower(s.Name)); err != nil {
+	uid, plistPath, err := s.getInfo()
+	if err != nil {
 		return err
 	}
 
-	plistPath, err := s.getPlistPath()
-	if err != nil {
+	if err := launchctl("bootout", fmt.Sprintf("gui/%s/%s", uid, strings.ToLower(s.Name))); err != nil {
 		return err
 	}
 
@@ -94,17 +95,32 @@ func (s *Service) Run(isDebug bool) {
 
 // Start starts the service.
 func (s *Service) Start() error {
-	return launchctl("kickstart", "gui/$(id -u)/"+strings.ToLower(s.Name))
+	uid, _, err := s.getInfo()
+	if err != nil {
+		return err
+	}
+
+	return launchctl("kickstart", fmt.Sprintf("gui/%s/%s", uid, strings.ToLower(s.Name)))
 }
 
 // Stop stops the service.
 func (s *Service) Stop() error {
-	return launchctl("kill", "SIGKILL", "gui/$(id -u)/"+strings.ToLower(s.Name))
+	uid, _, err := s.getInfo()
+	if err != nil {
+		return err
+	}
+
+	return launchctl("kill", "SIGKILL", fmt.Sprintf("gui/%s/%s", uid, strings.ToLower(s.Name)))
 }
 
 // Restart restarts the service.
 func (s *Service) Restart() error {
-	return launchctl("kickstart", "-k", "gui/$(id -u)/"+strings.ToLower(s.Name))
+	uid, _, err := s.getInfo()
+	if err != nil {
+		return err
+	}
+
+	return launchctl("kickstart", "-k", fmt.Sprintf("gui/%s/%s", uid, strings.ToLower(s.Name)))
 }
 
 func launchctl(arg ...string) error {

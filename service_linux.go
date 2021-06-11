@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"text/template"
 )
@@ -12,6 +13,7 @@ const systemdScript = `[Unit]
 Description={{.Description}}
 {{range .Dependencies}}{{println .}}{{end}}
 [Service]
+WorkingDirectory={{.Dir}}
 ExecStart={{.Path}}{{range .Arguments}} {{.}}{{end}}{{if .Environment}}{{range $key, $value := .Environment}}
 Environment={{$key}}={{$value}}{{end}}{{end}}
 {{range .Others}}{{println .}}{{end}}
@@ -43,6 +45,7 @@ func (s *Service) Install() error {
 
 	format := struct {
 		Description  string
+		Dir          string
 		Path         string
 		Dependencies []string
 		Arguments    []string
@@ -50,6 +53,7 @@ func (s *Service) Install() error {
 		Others       []string
 	}{
 		s.Desc,
+		filepath.Dir(path),
 		path,
 		s.Options.Dependencies,
 		s.Options.Arguments,

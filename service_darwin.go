@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"strings"
 	"text/template"
 )
@@ -14,11 +15,13 @@ const launchdPlist = `<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
   <dict>
     <key>Label</key>
-    <string>{{html .Name}}</string>
+    <string>{{.Name}}</string>
+    <key>WorkingDirectory</key>
+    <string>{{.Dir}}</string>
     <key>ProgramArguments</key>
     <array>
-      <string>{{html .Path}}</string>{{range .Arguments}}
-      <string>{{html .}}</string>{{end}}
+      <string>{{.Path}}</string>{{range .Arguments}}
+      <string>{{.}}</string>{{end}}
     </array>{{if .Environment}}
     <key>EnvironmentVariables</key>
     <dict>{{range $key, $value := .Environment}}
@@ -64,11 +67,13 @@ func (s *Service) Install() error {
 
 	format := struct {
 		Name        string
+		Dir         string
 		Path        string
 		Arguments   []string
 		Environment map[string]string
 	}{
 		strings.ToLower(s.Name),
+		filepath.Dir(path),
 		path,
 		s.Options.Arguments,
 		s.Options.Environment,

@@ -27,6 +27,7 @@ type Service struct {
 type Options struct {
 	Dependencies []string
 	Arguments    []string
+	Environment  map[string]string
 	Others       []string
 	UpdateURL    string
 	ExcludeFiles []string

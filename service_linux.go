@@ -12,7 +12,8 @@ const systemdScript = `[Unit]
 Description={{.Description}}
 {{range .Dependencies}}{{println .}}{{end}}
 [Service]
-ExecStart={{.Path}}{{range .Arguments}} {{.}}{{end}}
+ExecStart={{.Path}}{{range .Arguments}} {{.}}{{end}}{{if .Environment}}{{range $key, $value := .Environment}}
+Environment={{$key}}={{$value}}{{end}}{{end}}
 {{range .Others}}{{println .}}{{end}}
 [Install]
 WantedBy=multi-user.target
@@ -45,12 +46,14 @@ func (s *Service) Install() error {
 		Path         string
 		Dependencies []string
 		Arguments    []string
+		Environment  map[string]string
 		Others       []string
 	}{
 		s.Desc,
 		path,
 		s.Options.Dependencies,
 		s.Options.Arguments,
+		s.Options.Environment,
 		s.Options.Others,
 	}
 

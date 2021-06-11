@@ -19,7 +19,12 @@ const launchdPlist = `<?xml version="1.0" encoding="UTF-8"?>
     <array>
       <string>{{html .Path}}</string>{{range .Arguments}}
       <string>{{html .}}</string>{{end}}
-    </array>
+    </array>{{if .Environment}}
+    <key>EnvironmentVariables</key>
+    <dict>{{range $key, $value := .Environment}}
+      <key>{{$key}}</key>
+      <string>{{$value}}</string>{{end}}
+    </dict>{{end}}
     <key>RunAtLoad</key>
     <true/>
   </dict>
@@ -58,13 +63,15 @@ func (s *Service) Install() error {
 	}
 
 	format := struct {
-		Name      string
-		Path      string
-		Arguments []string
+		Name        string
+		Path        string
+		Arguments   []string
+		Environment map[string]string
 	}{
 		strings.ToLower(s.Name),
 		path,
 		s.Options.Arguments,
+		s.Options.Environment,
 	}
 
 	if err := template.Must(template.New("").Parse(launchdPlist)).Execute(f, format); err != nil {

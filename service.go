@@ -56,7 +56,7 @@ func (s *Service) Update() error {
 	}
 
 	var b bytes.Buffer
-	pb := progressbar.New(total).SetUnit("bytes")
+	pb := progressbar.New(int64(total)).SetUnit("bytes")
 	if _, err := pb.FromReader(resp.Body, &b); err != nil {
 		return err
 	}

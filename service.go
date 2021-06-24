@@ -56,11 +56,11 @@ func (s *Service) Update() error {
 	}
 
 	var b bytes.Buffer
-	pb := progressbar.New(int64(total)).SetUnit("bytes")
+	pb := progressbar.New(total).SetUnit("bytes")
 	if _, err := pb.FromReader(resp.Body, &b); err != nil {
 		return err
 	}
-	<-pb.Done
+	pb.Done()
 
 	files, err := archive.Unpack(&b)
 	if err != nil {

@@ -102,7 +102,11 @@ func (s *Service) Remove() error {
 
 // Run runs the service.
 func (s *Service) Run(isDebug bool) {
-	s.Exec()
+	if s.Exec != nil {
+		s.Exec()
+	} else {
+		panic("service execute is not defined")
+	}
 }
 
 // Start starts the service.

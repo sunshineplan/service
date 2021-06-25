@@ -17,10 +17,11 @@ var defaultName = "Service"
 
 // Service represents a windows service.
 type Service struct {
-	Name    string
-	Desc    string
-	Exec    func()
-	Options Options
+	Name     string
+	Desc     string
+	Exec     func()
+	TestExec func() error
+	Options  Options
 }
 
 // Options is Service options
@@ -132,6 +133,15 @@ Loop:
 
 	if _, err := os.Stat(self); err == nil {
 		return os.Remove(self + "~")
+	}
+
+	return nil
+}
+
+// Test tests the service.
+func (s *Service) Test() error {
+	if s.TestExec != nil {
+		return s.TestExec()
 	}
 
 	return nil

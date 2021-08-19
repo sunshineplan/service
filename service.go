@@ -110,14 +110,7 @@ Loop:
 			}
 
 			log.Printf("Updating file %s", target)
-			f, err := os.Create(target)
-			if err != nil {
-				return err
-			}
-			if _, err := f.Write(file.Body); err != nil {
-				return err
-			}
-			if err := f.Close(); err != nil {
+			if err := os.WriteFile(target, file.Body, 0644); err != nil {
 				return err
 			}
 		}

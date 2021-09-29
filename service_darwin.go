@@ -86,8 +86,8 @@ func (s *Service) Install() error {
 	return launchctl("bootstrap", "gui/"+uid, plistPath)
 }
 
-// Remove removes the service.
-func (s *Service) Remove() error {
+// Uninstall uninstalls the service.
+func (s *Service) Uninstall() error {
 	uid, plistPath, err := s.getInfo()
 	if err != nil {
 		return err

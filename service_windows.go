@@ -82,8 +82,8 @@ func (s *Service) Install() error {
 	return nil
 }
 
-// Remove removes the service.
-func (s *Service) Remove() error {
+// Uninstall uninstalls the service.
+func (s *Service) Uninstall() error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return err

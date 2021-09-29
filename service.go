@@ -159,3 +159,8 @@ func (s *Service) Test() error {
 
 	return nil
 }
+
+// Remove is an alias for Uninstall.
+func (s *Service) Remove() error {
+	return s.Uninstall()
+}

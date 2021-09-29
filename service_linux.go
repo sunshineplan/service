@@ -68,8 +68,8 @@ func (s *Service) Install() error {
 	return s.cmd("enable")
 }
 
-// Remove removes the service.
-func (s *Service) Remove() error {
+// Uninstall uninstalls the service.
+func (s *Service) Uninstall() error {
 	s.cmd("stop")
 
 	if err := s.cmd("disable"); err != nil {

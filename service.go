@@ -13,6 +13,26 @@ import (
 	"github.com/sunshineplan/utils/progressbar"
 )
 
+const Usage = `
+service command:
+  install
+    	Install service
+  uninstall/remove
+    	Uninstall service
+  run
+    	Run service executor
+  test
+    	Run service test executor	
+  start
+    	Start service
+  stop
+    	Stop service
+  restart
+    	Restart service
+  update
+    	Update service files if update url is provided
+`
+
 var defaultName = "Service"
 
 // Service represents a windows service.

@@ -1,4 +1,4 @@
-github.com/sunshineplan/utils v0.0.10 h1:o7zZv7mnfbpVlEZcyjqPp9fU9JJNXs8IPhm4E1XjFyg=
-github.com/sunshineplan/utils v0.0.10/go.mod h1:qMSfTzU5OKJ+CjP/JMP/s+XBb5AduLU820yQbarZzW0=
+github.com/sunshineplan/utils v0.0.11 h1:oDih5Matdi9FI/1/OMvRB0/CDDdAEYeAFouVSVP2B/g=
+github.com/sunshineplan/utils v0.0.11/go.mod h1:qMSfTzU5OKJ+CjP/JMP/s+XBb5AduLU820yQbarZzW0=
 golang.org/x/sys v0.0.0-20210818153620-00dd8d7831e7 h1:/bmDWM82ZX7TawqxuI8kVjKI0TXHdSY6pHJArewwHtU=
 golang.org/x/sys v0.0.0-20210818153620-00dd8d7831e7/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

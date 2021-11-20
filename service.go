@@ -152,11 +152,17 @@ Loop:
 }
 
 // Test tests the service.
-func (s *Service) Test() error {
+func (s *Service) Test() (err error) {
 	if s.TestExec != nil {
-		return s.TestExec()
+		err = s.TestExec()
+		if err != nil {
+			log.Println("Test failed:", err)
+		} else {
+			log.Print("Test pass.")
+		}
+	} else {
+		log.Print("No test provided.")
 	}
-
 	return nil
 }
 

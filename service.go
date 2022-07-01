@@ -65,6 +65,11 @@ func (s *Service) Update() error {
 		return fmt.Errorf("no update url provided")
 	}
 
+	self, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
 	resp, err := http.Get(s.Options.UpdateURL)
 	if err != nil {
 		return err
@@ -76,22 +81,24 @@ func (s *Service) Update() error {
 		return err
 	}
 
-	var b bytes.Buffer
+	var buf bytes.Buffer
 	pb := progressbar.New(total).SetUnit("bytes")
-	if _, err := pb.FromReader(resp.Body, &b); err != nil {
+	if _, err := pb.FromReader(resp.Body, &buf); err != nil {
 		return err
 	}
 	pb.Done()
 
-	files, err := archive.Unpack(&b)
-	if err != nil {
-		return err
+	b := buf.Bytes()
+	var files []archive.File
+	if ok, _ := archive.IsArchive(b); ok {
+		files, err = archive.Unpack(&buf)
+		if err != nil {
+			return err
+		}
+	} else {
+		files = append(files, archive.File{Name: filepath.Base(self), Body: b})
 	}
 
-	self, err := os.Executable()
-	if err != nil {
-		return err
-	}
 	if err := os.Rename(self, self+"~"); err != nil {
 		return err
 	}

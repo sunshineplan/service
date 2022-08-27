@@ -1,8 +1,8 @@
 module github.com/sunshineplan/service
 
-go 1.17
+go 1.19
 
 require (
 	github.com/sunshineplan/utils v0.1.5
-	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b
+	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64
 )

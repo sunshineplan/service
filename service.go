@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/sunshineplan/utils/archive"
 	"github.com/sunshineplan/utils/progressbar"
@@ -176,4 +177,32 @@ func (s *Service) Test() (err error) {
 // Remove is an alias for Uninstall.
 func (s *Service) Remove() error {
 	return s.Uninstall()
+}
+
+// Command runs service command.
+func (s *Service) Command(cmd string) (bool, error) {
+	var err error
+	switch strings.ToLower(cmd) {
+	case "run":
+		s.Run(false)
+	case "debug":
+		s.Run(true)
+	case "test":
+		err = s.Test()
+	case "install":
+		err = s.Install()
+	case "uninstall", "remove":
+		err = s.Uninstall()
+	case "start":
+		err = s.Start()
+	case "stop":
+		err = s.Stop()
+	case "restart":
+		err = s.Restart()
+	case "update":
+		err = s.Update()
+	default:
+		return false, nil
+	}
+	return true, err
 }

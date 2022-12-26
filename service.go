@@ -47,13 +47,13 @@ type Service struct {
 
 // Options is Service options
 type Options struct {
-	Dependencies      []string
-	Arguments         []string
-	Environment       map[string]string
-	Others            []string
-	UpdateURL         string
-	EmptyBeforeUpdate []string
-	ExcludeFiles      []string
+	Dependencies       []string
+	Arguments          []string
+	Environment        map[string]string
+	Others             []string
+	UpdateURL          string
+	RemoveBeforeUpdate []string
+	ExcludeFiles       []string
 }
 
 // New creates a new service name.
@@ -106,7 +106,7 @@ func (s *Service) Update() error {
 	}
 	path := filepath.Dir(self)
 
-	for _, i := range s.Options.EmptyBeforeUpdate {
+	for _, i := range s.Options.RemoveBeforeUpdate {
 		log.Printf("Removing %s", i)
 		if err := os.RemoveAll(filepath.Join(path, i)); err != nil {
 			log.Print(err)

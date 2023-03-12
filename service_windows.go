@@ -5,11 +5,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/sunshineplan/utils/log"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
 	"golang.org/x/sys/windows/svc/mgr"
 )
+
+var _ svc.Handler = (*Service)(nil)
 
 var elog debug.Log
 
@@ -17,30 +20,39 @@ var elog debug.Log
 // and the service will exit once Execute completes.
 func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, status chan<- svc.Status) (svcSpecificEC bool, exitCode uint32) {
 	status <- svc.Status{State: svc.Running, Accepts: svc.AcceptStop | svc.AcceptShutdown}
-
+	defer func() { status <- svc.Status{State: svc.StopPending} }()
 	elog.Info(1, fmt.Sprintf("Service %s started.", s.Name))
 
-	go s.Exec()
+	go func() {
+		s.done <- s.Exec()
+		close(s.done)
+	}()
 
-Loop:
 	for {
-		c := <-r
-		switch c.Cmd {
-		case svc.Interrogate:
-			status <- c.CurrentStatus
-			time.Sleep(100 * time.Millisecond)
-			status <- c.CurrentStatus
-		case svc.Stop, svc.Shutdown:
-			elog.Info(1, fmt.Sprintf("Stopping %s service(%d).", s.Name, c.Context))
-			break Loop
-		default:
-			elog.Error(1, fmt.Sprintf("Unexpected control request #%d", c))
+		select {
+		case c := <-r:
+			switch c.Cmd {
+			case svc.Interrogate:
+				status <- c.CurrentStatus
+				time.Sleep(100 * time.Millisecond)
+				status <- c.CurrentStatus
+			case svc.Stop, svc.Shutdown:
+				if s.Kill != nil {
+					if err := s.Kill(); err != nil {
+						s.Print(err)
+					}
+				} else {
+					close(s.done)
+				}
+				elog.Info(1, fmt.Sprintf("Stopping %s service(%d).", s.Name, c.Context))
+				return
+			default:
+				elog.Error(1, fmt.Sprintf("Unexpected control request #%d", c))
+			}
+		case <-s.done:
+			return
 		}
 	}
-
-	status <- svc.Status{State: svc.StopPending}
-
-	return
 }
 
 // Install installs the service.
@@ -103,13 +115,14 @@ func (s *Service) Uninstall() error {
 	return eventlog.Remove(s.Name)
 }
 
-// Run runs the service.
-func (s *Service) Run(isDebug bool) {
+func (s *Service) run(isDebug bool) (err error) {
 	if s.Exec == nil {
-		panic("service execute is not defined")
+		return ErrNoExcute
+	}
+	if s.Logger == nil {
+		s.Logger = log.Default()
 	}
 
-	var err error
 	if isDebug {
 		elog = debug.New(s.Name)
 	} else {
@@ -127,12 +140,24 @@ func (s *Service) Run(isDebug bool) {
 		run = debug.Run
 	}
 
-	if err := run(s.Name, s); err != nil {
+	s.done = make(chan error, 1)
+	if err = run(s.Name, s); err != nil {
 		elog.Error(1, fmt.Sprintf("Run %s service failed: %v", s.Name, err))
 		return
 	}
 
 	elog.Info(1, fmt.Sprintf("%s service stopped.", s.Name))
+	return <-s.done
+}
+
+// Run runs the service.
+func (s *Service) Run() error {
+	return s.run(false)
+}
+
+// Debug debugs the service.
+func (s *Service) Debug() error {
+	return s.run(true)
 }
 
 // Start starts the service.
@@ -201,6 +226,5 @@ func (s *Service) Restart() error {
 // as a service.
 func IsWindowsService() bool {
 	is, _ := svc.IsWindowsService()
-
 	return is
 }

@@ -2,8 +2,8 @@ package service
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/sunshineplan/utils/archive"
+	"github.com/sunshineplan/utils/log"
 	"github.com/sunshineplan/utils/progressbar"
 )
 
@@ -34,15 +35,21 @@ service command:
     	Update service files if update url is provided
 `
 
+var ErrNoExcute = errors.New("service execute is not defined")
+
 var defaultName = "Service"
 
 // Service represents a windows service.
 type Service struct {
+	*log.Logger
 	Name     string
 	Desc     string
-	Exec     func()
+	Exec     func() error
+	Kill     func() error
 	TestExec func() error
 	Options  Options
+
+	done chan error
 }
 
 // Options is Service options
@@ -51,6 +58,7 @@ type Options struct {
 	Arguments          []string
 	Environment        map[string]string
 	Others             []string
+	PIDFile            string
 	UpdateURL          string
 	RemoveBeforeUpdate []string
 	ExcludeFiles       []string
@@ -58,13 +66,21 @@ type Options struct {
 
 // New creates a new service name.
 func New() *Service {
-	return &Service{Name: defaultName}
+	return &Service{Logger: log.Default(), Name: defaultName}
+}
+
+func (s *Service) SetLogger(file, prefix string, flag int) *Service {
+	s.Logger = log.New(file, prefix, flag)
+	return s
 }
 
 // Update updates the service's installed files.
 func (s *Service) Update() error {
 	if s.Options.UpdateURL == "" {
 		return fmt.Errorf("no update url provided")
+	}
+	if s.Logger == nil {
+		s.Logger = log.Default()
 	}
 
 	self, err := os.Executable()
@@ -107,9 +123,9 @@ func (s *Service) Update() error {
 	path := filepath.Dir(self)
 
 	for _, i := range s.Options.RemoveBeforeUpdate {
-		log.Printf("Removing %s", i)
+		s.Printf("Removing %s", i)
 		if err := os.RemoveAll(filepath.Join(path, i)); err != nil {
-			log.Print(err)
+			s.Print(err)
 		}
 	}
 
@@ -130,7 +146,7 @@ Loop:
 			dir, err := os.Stat(target)
 			if err != nil {
 				if os.IsNotExist(err) {
-					log.Printf("Creating directory %s", target)
+					s.Printf("Creating directory %s", target)
 					if err := os.MkdirAll(target, 0755); err != nil {
 						return err
 					}
@@ -145,7 +161,7 @@ Loop:
 				return err
 			}
 
-			log.Printf("Updating file %s", target)
+			s.Printf("Updating file %s", target)
 			if err := os.WriteFile(target, file.Body, 0644); err != nil {
 				return err
 			}
@@ -169,17 +185,19 @@ Loop:
 
 // Test tests the service.
 func (s *Service) Test() (err error) {
+	if s.Logger == nil {
+		s.Logger = log.Default()
+	}
 	if s.TestExec != nil {
-		err = s.TestExec()
-		if err != nil {
-			log.Println("Test failed:", err)
+		if err = s.TestExec(); err != nil {
+			s.Println("Test failed:", err)
 		} else {
-			log.Print("Test pass.")
+			s.Print("Test pass.")
 		}
 	} else {
-		log.Print("No test provided.")
+		s.Print("No test provided.")
 	}
-	return nil
+	return
 }
 
 // Remove is an alias for Uninstall.
@@ -192,9 +210,11 @@ func (s *Service) Command(cmd string) (bool, error) {
 	var err error
 	switch strings.ToLower(cmd) {
 	case "run":
-		s.Run(false)
+		err = s.Run()
 	case "debug":
-		s.Run(true)
+		err = s.Debug()
+	case "kill":
+		err = s.Kill()
 	case "test":
 		err = s.Test()
 	case "install":

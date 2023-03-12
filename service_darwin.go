@@ -100,15 +100,6 @@ func (s *Service) Uninstall() error {
 	return os.Remove(plistPath)
 }
 
-// Run runs the service.
-func (s *Service) Run(isDebug bool) {
-	if s.Exec != nil {
-		s.Exec()
-	} else {
-		panic("service execute is not defined")
-	}
-}
-
 // Start starts the service.
 func (s *Service) Start() error {
 	uid, _, err := s.getInfo()
@@ -155,10 +146,4 @@ func launchctl(arg ...string) error {
 	}
 
 	return nil
-}
-
-// IsWindowsService reports whether the process is currently executing
-// as a service.
-func IsWindowsService() bool {
-	return false
 }

@@ -5,6 +5,7 @@ package service
 import (
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"syscall"
 
@@ -19,11 +20,15 @@ func (s *Service) Run() error {
 	if s.Logger == nil {
 		s.Logger = log.Default()
 	}
-	if s.Options.PIDFile != "" {
-		if err := os.WriteFile(s.Options.PIDFile, []byte(strconv.Itoa(os.Getpid())), 0644); err != nil {
+	if pid := s.Options.PIDFile; pid != "" {
+		if err := os.MkdirAll(filepath.Dir(pid), 0775); err != nil {
 			s.Println("Failed to write pid file:", err)
 		} else {
-			defer os.Remove(s.Options.PIDFile)
+			if err := os.WriteFile(pid, []byte(strconv.Itoa(os.Getpid())), 0644); err != nil {
+				s.Println("Failed to write pid file:", err)
+			} else {
+				defer os.Remove(s.Options.PIDFile)
+			}
 		}
 	}
 	s.done = make(chan error, 1)

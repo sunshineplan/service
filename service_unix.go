@@ -31,30 +31,25 @@ func (s *Service) Run() error {
 			}
 		}
 	}
-	s.done = make(chan error, 1)
+	s.done = make(chan error, 2)
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(c, syscall.SIGHUP)
 	go func() {
-		for sig := range c {
-			switch sig {
-			case syscall.SIGHUP:
-				s.Logger.Rotate()
-			case syscall.SIGINT, syscall.SIGTERM:
-				if s.Kill != nil {
-					if err := s.Kill(); err != nil {
-						s.Print(err)
-					}
-				} else {
-					close(s.done)
-				}
-				return
-			}
+		for range c {
+			s.Logger.Rotate()
 		}
 	}()
-	go func() {
-		s.done <- s.Exec()
-		close(s.done)
-	}()
+	if s.Kill != nil {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			for range c {
+				s.done <- s.Kill()
+				return
+			}
+		}()
+	}
+	go func() { s.done <- s.Exec() }()
 	return <-s.done
 }
 

@@ -23,10 +23,7 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, status chan
 	defer func() { status <- svc.Status{State: svc.StopPending} }()
 	elog.Info(1, fmt.Sprintf("Service %s started.", s.Name))
 
-	go func() {
-		s.done <- s.Exec()
-		close(s.done)
-	}()
+	go func() { s.done <- s.Exec() }()
 
 	for {
 		select {
@@ -37,19 +34,18 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, status chan
 				time.Sleep(100 * time.Millisecond)
 				status <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
+				var err error
 				if s.Kill != nil {
-					if err := s.Kill(); err != nil {
-						s.Print(err)
-					}
-				} else {
-					close(s.done)
+					err = s.Kill()
 				}
+				s.done <- err
 				elog.Info(1, fmt.Sprintf("Stopping %s service(%d).", s.Name, c.Context))
 				return
 			default:
 				elog.Error(1, fmt.Sprintf("Unexpected control request #%d", c))
 			}
-		case <-s.done:
+		case err := <-s.done:
+			s.done <- err
 			return
 		}
 	}
@@ -140,7 +136,7 @@ func (s *Service) run(isDebug bool) (err error) {
 		run = debug.Run
 	}
 
-	s.done = make(chan error, 1)
+	s.done = make(chan error, 2)
 	if err = run(s.Name, s); err != nil {
 		elog.Error(1, fmt.Sprintf("Run %s service failed: %v", s.Name, err))
 		return

@@ -227,6 +227,8 @@ func (s *Service) Command(cmd string) (bool, error) {
 		err = s.Stop()
 	case "restart":
 		err = s.Restart()
+	case "status":
+		err = s.Status()
 	case "update":
 		err = s.Update()
 	default:

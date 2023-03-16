@@ -94,6 +94,11 @@ func (s *Service) Restart() error {
 	return s.cmd("restart")
 }
 
+// Status shows the service status.
+func (s *Service) Status() error {
+	return s.cmd("status")
+}
+
 func (s *Service) cmd(action string) error {
 	cmd := exec.Command("systemctl", action, strings.ToLower(s.Name))
 

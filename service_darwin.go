@@ -130,6 +130,16 @@ func (s *Service) Restart() error {
 	return launchctl("kickstart", "-k", fmt.Sprintf("gui/%s/%s", uid, strings.ToLower(s.Name)))
 }
 
+// Status shows the service status.
+func (s *Service) Status() error {
+	uid, _, err := s.getInfo()
+	if err != nil {
+		return err
+	}
+
+	return launchctl("print", fmt.Sprintf("gui/%s/%s", uid, strings.ToLower(s.Name)))
+}
+
 func launchctl(arg ...string) error {
 	cmd := exec.Command("launchctl", arg...)
 

@@ -218,6 +218,13 @@ func (s *Service) Restart() error {
 	return s.Start()
 }
 
+// Status shows the service status.
+// Not supported on windows.
+func (s *Service) Status() error {
+	log.Print("status command is not supported on windows")
+	return nil
+}
+
 // IsWindowsService reports whether the process is currently executing
 // as a service.
 func IsWindowsService() bool {

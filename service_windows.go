@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"time"
 
 	"github.com/sunshineplan/utils/log"
 	"golang.org/x/sys/windows/svc"

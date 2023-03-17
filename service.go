@@ -31,6 +31,8 @@ service command:
     	Stop service
   restart
     	Restart service
+  status
+    	Show service status
   update
     	Update service files if update url is provided
 `
@@ -211,8 +213,6 @@ func (s *Service) Command(cmd string) (bool, error) {
 	switch strings.ToLower(cmd) {
 	case "run":
 		err = s.Run()
-	case "debug":
-		err = s.Debug()
 	case "kill":
 		err = s.Kill()
 	case "test":

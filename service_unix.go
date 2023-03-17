@@ -53,11 +53,6 @@ func (s *Service) Run() error {
 	return <-s.done
 }
 
-// Debug debugs the service.
-func (s *Service) Debug() error {
-	return s.Run()
-}
-
 // IsWindowsService reports whether the process is currently executing
 // as a service.
 func IsWindowsService() bool {

@@ -65,12 +65,12 @@ func (s *Service) Install() error {
 		return err
 	}
 
-	return s.cmd("enable")
+	return s.systemctl("enable")
 }
 
 // Uninstall uninstalls the service.
 func (s *Service) Uninstall() error {
-	s.cmd("stop")
+	s.systemctl("stop")
 
 	if err := s.cmd("disable"); err != nil {
 		return err
@@ -81,25 +81,25 @@ func (s *Service) Uninstall() error {
 
 // Start starts the service.
 func (s *Service) Start() error {
-	return s.cmd("start")
+	return s.systemctl("start")
 }
 
 // Stop stops the service.
 func (s *Service) Stop() error {
-	return s.cmd("stop")
+	return s.systemctl("stop")
 }
 
 // Restart restarts the service.
 func (s *Service) Restart() error {
-	return s.cmd("restart")
+	return s.systemctl("restart")
 }
 
 // Status shows the service status.
 func (s *Service) Status() error {
-	return s.cmd("status")
+	return s.systemctl("status")
 }
 
-func (s *Service) cmd(action string) error {
+func (s *Service) systemctl(action string) error {
 	cmd := exec.Command("systemctl", action, strings.ToLower(s.Name))
 
 	if err := cmd.Start(); err != nil {

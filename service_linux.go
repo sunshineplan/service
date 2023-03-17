@@ -72,7 +72,7 @@ func (s *Service) Install() error {
 func (s *Service) Uninstall() error {
 	s.systemctl("stop")
 
-	if err := s.cmd("disable"); err != nil {
+	if err := s.systemctl("disable"); err != nil {
 		return err
 	}
 

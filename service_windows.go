@@ -1,9 +1,7 @@
 package service
 
 import (
-	"fmt"
 	"os"
-	"os/exec"
 
 	"github.com/sunshineplan/utils/log"
 	"golang.org/x/sys/windows/svc"
@@ -108,22 +106,7 @@ func (s *Service) Status() error {
 }
 
 func (s *Service) sc(action string, arg ...string) error {
-	cmd := exec.Command("sc", action, s.Name)
-	cmd.Args = append(cmd.Args, arg...)
-
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("execute %q failed: %v", action, err)
-	}
-
-	if err := cmd.Wait(); err != nil {
-		if exiterr, ok := err.(*exec.ExitError); ok {
-			return fmt.Errorf("run %q failed: %s", action, exiterr.Stderr)
-		}
-
-		return fmt.Errorf("execute %q failed: %v", action, err)
-	}
-
-	return nil
+	return run("sc", append([]string{action, s.Name}, arg...))
 }
 
 // IsWindowsService reports whether the process is currently executing

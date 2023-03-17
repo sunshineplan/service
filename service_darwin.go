@@ -3,9 +3,9 @@ package service
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 )
@@ -34,18 +34,21 @@ const launchdPlist = `<?xml version="1.0" encoding="UTF-8"?>
 </plist>
 `
 
-func (s *Service) getInfo() (string, string, error) {
-	u, err := user.Current()
+func (s *Service) plist() (string, error) {
+	user, err := user.Current()
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
+	return user.HomeDir + "/Library/LaunchAgents/" + strings.ToLower(s.Name) + ".plist", nil
+}
 
-	return u.Uid, u.HomeDir + "/Library/LaunchAgents/" + strings.ToLower(s.Name) + ".plist", nil
+func (s *Service) target() string {
+	return fmt.Sprintf("gui/%d/%s", os.Getuid(), strings.ToLower(s.Name))
 }
 
 // Install installs the service.
 func (s *Service) Install() error {
-	uid, plistPath, err := s.getInfo()
+	plistPath, err := s.plist()
 	if err != nil {
 		return err
 	}
@@ -54,7 +57,7 @@ func (s *Service) Install() error {
 		return fmt.Errorf("plist %s exists", plistPath)
 	}
 
-	f, err := os.OpenFile(plistPath, os.O_WRONLY|os.O_CREATE, 0644)
+	f, err := os.Create(plistPath)
 	if err != nil {
 		return err
 	}
@@ -83,17 +86,17 @@ func (s *Service) Install() error {
 		return err
 	}
 
-	return launchctl("bootstrap", "gui/"+uid, plistPath)
+	return run("launchctl", "bootstrap", "gui/"+strconv.Itoa(os.Getuid()), plistPath)
 }
 
 // Uninstall uninstalls the service.
 func (s *Service) Uninstall() error {
-	uid, plistPath, err := s.getInfo()
+	plistPath, err := s.plist()
 	if err != nil {
 		return err
 	}
 
-	if err := launchctl("bootout", fmt.Sprintf("gui/%s/%s", uid, strings.ToLower(s.Name))); err != nil {
+	if err := s.launchctl("bootout"); err != nil {
 		return err
 	}
 
@@ -102,58 +105,24 @@ func (s *Service) Uninstall() error {
 
 // Start starts the service.
 func (s *Service) Start() error {
-	uid, _, err := s.getInfo()
-	if err != nil {
-		return err
-	}
-
-	return launchctl("kickstart", fmt.Sprintf("gui/%s/%s", uid, strings.ToLower(s.Name)))
+	return s.launchctl("kickstart")
 }
 
 // Stop stops the service.
 func (s *Service) Stop() error {
-	uid, _, err := s.getInfo()
-	if err != nil {
-		return err
-	}
-
-	return launchctl("kill", "SIGKILL", fmt.Sprintf("gui/%s/%s", uid, strings.ToLower(s.Name)))
+	return s.launchctl("kill", "SIGKILL")
 }
 
 // Restart restarts the service.
 func (s *Service) Restart() error {
-	uid, _, err := s.getInfo()
-	if err != nil {
-		return err
-	}
-
-	return launchctl("kickstart", "-k", fmt.Sprintf("gui/%s/%s", uid, strings.ToLower(s.Name)))
+	return s.launchctl("kickstart", "-k")
 }
 
 // Status shows the service status.
 func (s *Service) Status() error {
-	uid, _, err := s.getInfo()
-	if err != nil {
-		return err
-	}
-
-	return launchctl("print", fmt.Sprintf("gui/%s/%s", uid, strings.ToLower(s.Name)))
+	return s.launchctl("print")
 }
 
-func launchctl(arg ...string) error {
-	cmd := exec.Command("launchctl", arg...)
-
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("execute %q failed: %v", cmd.String(), err)
-	}
-
-	if err := cmd.Wait(); err != nil {
-		if exiterr, ok := err.(*exec.ExitError); ok {
-			return fmt.Errorf("run %q failed: %s", cmd.String(), exiterr.Stderr)
-		}
-
-		return fmt.Errorf("execute %q failed: %v", cmd.String(), err)
-	}
-
-	return nil
+func (s *Service) launchctl(arg ...string) error {
+	return run("launchctl", append(arg, s.target())...)
 }

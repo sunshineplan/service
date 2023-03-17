@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -100,19 +99,5 @@ func (s *Service) Status() error {
 }
 
 func (s *Service) systemctl(action string) error {
-	cmd := exec.Command("systemctl", action, strings.ToLower(s.Name))
-
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("execute %q failed: %v", action, err)
-	}
-
-	if err := cmd.Wait(); err != nil {
-		if exiterr, ok := err.(*exec.ExitError); ok {
-			return fmt.Errorf("run %q failed: %s", action, exiterr.Stderr)
-		}
-
-		return fmt.Errorf("execute %q failed: %v", action, err)
-	}
-
-	return nil
+	return run("systemctl", action, strings.ToLower(s.Name))
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -235,4 +236,21 @@ func (s *Service) Command(cmd string) (bool, error) {
 		return false, nil
 	}
 	return true, err
+}
+
+func run(name string, arg ...string) error {
+	cmd := exec.Command(name, arg...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("execute %q failed: %s", cmd.String(), err)
+	}
+	if err := cmd.Wait(); err != nil {
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			return fmt.Errorf("run %q failed: %s", cmd.String(), exiterr.Stderr)
+		}
+		return fmt.Errorf("execute %q failed: %s", cmd.String(), err)
+	}
+	return nil
 }

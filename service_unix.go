@@ -8,17 +8,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"syscall"
-
-	"github.com/sunshineplan/utils/log"
 )
 
 // Run runs the service.
 func (s *Service) Run() error {
 	if s.Exec == nil {
 		return ErrNoExcute
-	}
-	if s.Logger == nil {
-		s.Logger = log.Default()
 	}
 	if pid := s.Options.PIDFile; pid != "" {
 		if err := os.MkdirAll(filepath.Dir(pid), 0775); err != nil {

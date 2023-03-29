@@ -70,9 +70,6 @@ func (s *Service) Run() error {
 	if s.Exec == nil {
 		return ErrNoExcute
 	}
-	if s.Logger == nil {
-		s.Logger = log.Default()
-	}
 
 	s.done = make(chan error, 2)
 	if err := svc.Run(s.Name, s); err != nil {

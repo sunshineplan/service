@@ -3,7 +3,6 @@ package service
 import (
 	"os"
 
-	"github.com/sunshineplan/utils/log"
 	"golang.org/x/sys/windows/svc"
 )
 

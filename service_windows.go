@@ -72,7 +72,7 @@ func (s *Service) Run() error {
 
 	s.done = make(chan error, 2)
 	if err := svc.Run(s.Name, s); err != nil {
-		return err
+		return s.Exec()
 	}
 
 	return <-s.done

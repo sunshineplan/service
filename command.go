@@ -25,6 +25,8 @@ func (s *Service) initCommand() {
 	s.RegisterCommand("update", "Update service files if update url is provided", wrapFunc(s.Update), 0)
 }
 
+// RegisterCommand registers command according to name, and it will check the number of arguments
+// if args is not a negative number.
 func (s *Service) RegisterCommand(name, usage string, fn func(arg ...string) error, args int) {
 	name = strings.ToLower(name)
 	if _, ok := s.m[name]; !ok {
@@ -33,6 +35,7 @@ func (s *Service) RegisterCommand(name, usage string, fn func(arg ...string) err
 	s.m[name] = command{fn, args, usage}
 }
 
+// ParseAndRun parses args and runs the service.
 func (s *Service) ParseAndRun(args []string) error {
 	if IsWindowsService() {
 		return s.Run()
@@ -43,7 +46,7 @@ func (s *Service) ParseAndRun(args []string) error {
 		return s.Run()
 	default:
 		if cmd, ok := s.m[strings.ToLower(args[0])]; ok && cmd.fn != nil {
-			if a := args[1:]; len(a) == cmd.args {
+			if a := args[1:]; cmd.args < 0 || len(a) == cmd.args {
 				return cmd.fn(a...)
 			} else {
 				return fmt.Errorf("%s need %d arguments", args[0], cmd.args)
@@ -53,6 +56,7 @@ func (s *Service) ParseAndRun(args []string) error {
 	}
 }
 
+// Usage returns service usage.
 func (s *Service) Usage() string {
 	var b strings.Builder
 	b.WriteString("\nservice command:\n")

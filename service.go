@@ -9,7 +9,8 @@ import (
 	"github.com/sunshineplan/utils/log"
 )
 
-var ErrNoExcute = errors.New("service execute is not defined")
+// ErrNoExcute is the error returned when the service execute is not specified.
+var ErrNoExcute = errors.New("service execute is not specified")
 
 var defaultName = "Service"
 
@@ -48,6 +49,7 @@ func New() *Service {
 	return svc
 }
 
+// SetLogger sets service's log file.
 func (s *Service) SetLogger(file, prefix string, flag int) *Service {
 	s.Logger = log.New(file, prefix, flag)
 	return s

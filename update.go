@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 
 	"github.com/sunshineplan/utils/archive"
@@ -105,6 +106,9 @@ Loop:
 
 	if err := os.Chmod(self, 0755); err != nil {
 		return err
+	}
+	if runtime.GOOS == "darwin" {
+		run("codesign", "--sign", "-", "--force", "--preserve-metadata=entitlements,requirements,flags,runtime", self)
 	}
 
 	if err := s.Restart(); err != nil {

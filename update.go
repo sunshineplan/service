@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 
 	"github.com/sunshineplan/utils/archive"
@@ -52,16 +51,14 @@ func (s *Service) Update() error {
 	} else {
 		files = append(files, archive.File{Name: filepath.Base(self), Body: b})
 	}
-
-	if err := os.Rename(self, self+"~"); err != nil {
-		return err
-	}
 	path := filepath.Dir(self)
 
 	for _, i := range s.Options.RemoveBeforeUpdate {
-		s.Printf("Removing %s", i)
-		if err := os.RemoveAll(filepath.Join(path, i)); err != nil {
-			s.Print(err)
+		if file := filepath.Join(path, i); file != self {
+			s.Printf("Removing %s", i)
+			if err := os.RemoveAll(file); err != nil {
+				s.Print(err)
+			}
 		}
 	}
 
@@ -98,26 +95,38 @@ Loop:
 			}
 
 			s.Printf("Updating file %s", target)
-			if err := os.WriteFile(target, file.Body, 0644); err != nil {
-				return err
+			if target == self {
+				if err := os.Rename(target, target+"~"); err != nil {
+					return err
+				}
+				f, err := os.CreateTemp(path, filepath.Base(target)+".tmp*")
+				if err != nil {
+					return err
+				}
+				if _, err := f.Write(file.Body); err != nil {
+					return err
+				}
+				if err := f.Close(); err != nil {
+					return err
+				}
+				if err := os.Rename(f.Name(), target); err != nil {
+					return err
+				}
+			} else {
+				if err := os.WriteFile(target, file.Body, 0644); err != nil {
+					return err
+				}
 			}
 		}
 	}
-
 	if err := os.Chmod(self, 0755); err != nil {
 		return err
 	}
-	if runtime.GOOS == "darwin" {
-		run("codesign", "--sign", "-", "--force", "--preserve-metadata=entitlements,requirements,flags,runtime", self)
-	}
-
 	if err := s.Restart(); err != nil {
 		return err
 	}
-
-	if _, err := os.Stat(self); err == nil {
+	if _, err := os.Stat(self + "~"); err == nil {
 		return os.Remove(self + "~")
 	}
-
 	return nil
 }

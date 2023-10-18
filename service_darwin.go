@@ -123,6 +123,17 @@ func (s *Service) Status() error {
 	return s.launchctl("print")
 }
 
+func (s *Service) reload() error {
+	plistPath, err := s.plist()
+	if err != nil {
+		return err
+	}
+	if err := s.launchctl("bootout"); err != nil {
+		return err
+	}
+	return run("launchctl", "bootstrap", "gui/"+strconv.Itoa(os.Getuid()), plistPath)
+}
+
 func (s *Service) launchctl(arg ...string) error {
 	return run("launchctl", append(arg, s.target())...)
 }

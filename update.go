@@ -112,6 +112,9 @@ Loop:
 				if err := os.Rename(f.Name(), target); err != nil {
 					return err
 				}
+				if err := s.reload(); err != nil {
+					return err
+				}
 			} else {
 				if err := os.WriteFile(target, file.Body, 0644); err != nil {
 					return err

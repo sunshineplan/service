@@ -101,6 +101,10 @@ func (s *Service) Status() error {
 	return s.sc("queryex")
 }
 
+func (s *Service) reload() error {
+	return nil
+}
+
 func (s *Service) sc(action string, arg ...string) error {
 	return run("sc", append([]string{action, s.Name}, arg...)...)
 }

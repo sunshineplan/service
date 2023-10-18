@@ -98,6 +98,10 @@ func (s *Service) Status() error {
 	return s.systemctl("status")
 }
 
+func (s *Service) reload() error {
+	return nil
+}
+
 func (s *Service) systemctl(action string) error {
 	return run("systemctl", action, strings.ToLower(s.Name))
 }

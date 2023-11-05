@@ -32,21 +32,25 @@ service command:
 ` {
 		t.Fatalf("wrong usage: %s", usage)
 	}
-	s.RegisterCommand("install", "", nil, 0)
-	s.RegisterCommand("uninstall", "", nil, 0)
-	s.RegisterCommand("remove", "", nil, 0)
-	s.RegisterCommand("run", "", nil, 0)
-	s.RegisterCommand("test", "", nil, 0)
-	s.RegisterCommand("start", "", nil, 0)
-	s.RegisterCommand("stop", "", nil, 0)
-	s.RegisterCommand("restart", "", nil, 0)
-	s.RegisterCommand("status", "", nil, 0)
-	s.RegisterCommand("update", "", nil, 0)
+	s.RegisterCommand("install", "", nil, 0, false)
+	s.RegisterCommand("uninstall", "", nil, 0, false)
+	s.RegisterCommand("remove", "", nil, 0, false)
+	s.RegisterCommand("run", "", nil, 0, false)
+	s.RegisterCommand("test", "", nil, 0, false)
+	s.RegisterCommand("start", "", nil, 0, false)
+	s.RegisterCommand("stop", "", nil, 0, false)
+	s.RegisterCommand("restart", "", nil, 0, false)
+	s.RegisterCommand("status", "", nil, 0, false)
+	s.RegisterCommand("update", "", nil, 0, false)
 	var res string
 	s.RegisterCommand("test", "test", func(arg ...string) error {
 		res = strings.Join(arg, ",")
 		return nil
-	}, 2)
+	}, 2, true)
+	s.RegisterCommand("hide", "test", func(arg ...string) error {
+		res = strings.Join(arg, ",")
+		return nil
+	}, 2, false)
 	if usage := s.Usage(); usage != `
 service command:
   test

@@ -6,33 +6,34 @@ import (
 )
 
 type command struct {
-	fn    func(arg ...string) error
-	args  int
-	usage string
+	fn      func(arg ...string) error
+	args    int
+	usage   string
+	display bool
 }
 
 func (s *Service) initCommand() {
 	s.m = make(map[string]command)
-	s.RegisterCommand("install", "Install service", wrapFunc(s.Install), 0)
-	s.RegisterCommand("uninstall", "Uninstall service", wrapFunc(s.Uninstall), 0)
-	s.RegisterCommand("remove", "Remove service, equal uninstall", wrapFunc(s.Remove), 0)
-	s.RegisterCommand("run", "Run service executor", wrapFunc(s.Run), 0)
-	s.RegisterCommand("test", "Run service test executor", wrapFunc(s.Test), 0)
-	s.RegisterCommand("start", "Start service", wrapFunc(s.Start), 0)
-	s.RegisterCommand("stop", "Stop service", wrapFunc(s.Stop), 0)
-	s.RegisterCommand("restart", "Restart service", wrapFunc(s.Restart), 0)
-	s.RegisterCommand("status", "Show service status info", wrapFunc(s.Status), 0)
-	s.RegisterCommand("update", "Update service files if update url is provided", wrapFunc(s.Update), 0)
+	s.RegisterCommand("install", "Install service", wrapFunc(s.Install), 0, true)
+	s.RegisterCommand("uninstall", "Uninstall service", wrapFunc(s.Uninstall), 0, true)
+	s.RegisterCommand("remove", "Remove service, equal uninstall", wrapFunc(s.Remove), 0, true)
+	s.RegisterCommand("run", "Run service executor", wrapFunc(s.Run), 0, true)
+	s.RegisterCommand("test", "Run service test executor", wrapFunc(s.Test), 0, true)
+	s.RegisterCommand("start", "Start service", wrapFunc(s.Start), 0, true)
+	s.RegisterCommand("stop", "Stop service", wrapFunc(s.Stop), 0, true)
+	s.RegisterCommand("restart", "Restart service", wrapFunc(s.Restart), 0, true)
+	s.RegisterCommand("status", "Show service status info", wrapFunc(s.Status), 0, true)
+	s.RegisterCommand("update", "Update service files if update url is provided", wrapFunc(s.Update), 0, true)
 }
 
 // RegisterCommand registers command according to name, and it will check the number of arguments
 // if args is not a negative number.
-func (s *Service) RegisterCommand(name, usage string, fn func(arg ...string) error, args int) {
+func (s *Service) RegisterCommand(name, usage string, fn func(arg ...string) error, args int, display bool) {
 	name = strings.ToLower(name)
 	if _, ok := s.m[name]; !ok {
 		s.commands = append(s.commands, name)
 	}
-	s.m[name] = command{fn, args, usage}
+	s.m[name] = command{fn, args, usage, display}
 }
 
 // ParseAndRun parses args and runs the service.
@@ -61,7 +62,7 @@ func (s *Service) Usage() string {
 	var b strings.Builder
 	b.WriteString("\nservice command:\n")
 	for _, i := range s.commands {
-		if s.m[i].fn != nil {
+		if command := s.m[i]; command.display && command.fn != nil {
 			fmt.Fprint(&b, "  ", i, "\n")
 			fmt.Fprint(&b, "  \t", s.m[i].usage, "\n")
 		}

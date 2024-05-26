@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -24,6 +25,23 @@ func (s *Service) initCommand() {
 	s.RegisterCommand("restart", "Restart service", wrapFunc(s.Restart), 0, true)
 	s.RegisterCommand("status", "Show service status info", wrapFunc(s.Status), 0, true)
 	s.RegisterCommand("update", "Update service files if update url is provided", wrapFunc(s.Update), 0, true)
+	s.RegisterCommand("log", "Display log if present", func(arg ...string) error {
+		if s.Logger == nil {
+			fmt.Println("no log file is set")
+			return nil
+		}
+		file := s.File()
+		fmt.Println("log file:", file)
+		if strings.HasPrefix(file, "/dev/") {
+			return nil
+		}
+		b, err := os.ReadFile(file)
+		if err != nil {
+			return err
+		}
+		_, err = os.Stdout.Write(b)
+		return err
+	}, 0, true)
 }
 
 // RegisterCommand registers command according to name, and it will check the number of arguments

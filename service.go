@@ -14,7 +14,7 @@ var ErrNoExcute = errors.New("service execute is not specified")
 
 var defaultName = "Service"
 
-// Service represents a windows service.
+// Service represents a service.
 type Service struct {
 	*log.Logger
 	Name     string

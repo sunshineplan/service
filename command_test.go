@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log"
 	"strings"
 	"testing"
 )
@@ -29,19 +30,13 @@ service command:
   	Show service status info
   update
   	Update service files if update url is provided
+  log
+  	Display log if present
 ` {
 		t.Fatalf("wrong usage: %s", usage)
 	}
-	s.RegisterCommand("install", "", nil, 0, false)
-	s.RegisterCommand("uninstall", "", nil, 0, false)
-	s.RegisterCommand("remove", "", nil, 0, false)
-	s.RegisterCommand("run", "", nil, 0, false)
-	s.RegisterCommand("test", "", nil, 0, false)
-	s.RegisterCommand("start", "", nil, 0, false)
-	s.RegisterCommand("stop", "", nil, 0, false)
-	s.RegisterCommand("restart", "", nil, 0, false)
-	s.RegisterCommand("status", "", nil, 0, false)
-	s.RegisterCommand("update", "", nil, 0, false)
+	s.commands = nil
+	s.m = make(map[string]command)
 	var res string
 	s.RegisterCommand("test", "test", func(arg ...string) error {
 		res = strings.Join(arg, ",")
@@ -56,6 +51,7 @@ service command:
   test
   	test
 ` {
+		log.Print(s.m, s.commands)
 		t.Fatalf("wrong usage: %s", usage)
 	}
 	if err := s.ParseAndRun([]string{"test", "a", "b"}); err != nil {

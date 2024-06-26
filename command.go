@@ -64,6 +64,9 @@ func (s *Service) ParseAndRun(args []string) error {
 	case 0:
 		return s.Run()
 	default:
+		if s.Logger.Writer() != os.Stderr {
+			s.SetExtra(os.Stderr)
+		}
 		if cmd, ok := s.m[strings.ToLower(args[0])]; ok && cmd.fn != nil {
 			if a := args[1:]; cmd.args < 0 || len(a) == cmd.args {
 				return cmd.fn(a...)

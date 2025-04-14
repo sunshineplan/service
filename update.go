@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
+	"time"
 
 	"github.com/sunshineplan/utils/archive"
 	"github.com/sunshineplan/utils/progressbar"
@@ -22,6 +24,7 @@ func (s *Service) Update() error {
 	if err != nil {
 		return err
 	}
+	selfTmp := fmt.Sprintf("%s.%s.tmp", self, time.Now().Format(time.DateOnly))
 
 	resp, err := http.Get(s.Options.UpdateURL)
 	if err != nil {
@@ -53,6 +56,11 @@ func (s *Service) Update() error {
 	}
 	path := filepath.Dir(self)
 
+	s.Printf("Stopping %s", s.Name)
+	if err := s.Stop(); err != nil {
+		return err
+	}
+
 	for _, i := range s.Options.RemoveBeforeUpdate {
 		if file := filepath.Join(path, i); file != self {
 			s.Printf("Removing %s", i)
@@ -75,8 +83,8 @@ Loop:
 		}
 
 		target := filepath.Join(path, file.Name)
+		stat, err := os.Stat(target)
 		if file.IsDir {
-			dir, err := os.Stat(target)
 			if err != nil {
 				if os.IsNotExist(err) {
 					s.Printf("Creating directory %s", target)
@@ -86,7 +94,7 @@ Loop:
 				} else {
 					return err
 				}
-			} else if !dir.IsDir() {
+			} else if !stat.IsDir() {
 				return fmt.Errorf("cannot create directory %q: file exists", target)
 			}
 		} else {
@@ -96,40 +104,33 @@ Loop:
 
 			s.Printf("Updating file %s", target)
 			if target == self {
-				if err := os.Rename(target, target+"~"); err != nil {
-					return err
-				}
-				f, err := os.CreateTemp(path, filepath.Base(target)+".tmp*")
-				if err != nil {
-					return err
-				}
-				if _, err := f.Write(file.Body); err != nil {
-					return err
-				}
-				if err := f.Close(); err != nil {
-					return err
-				}
-				if err := os.Rename(f.Name(), target); err != nil {
-					return err
-				}
-				if err := s.reload(); err != nil {
-					return err
-				}
-			} else {
-				if err := os.WriteFile(target, file.Body, 0644); err != nil {
+				if err := os.Rename(self, selfTmp); err != nil {
 					return err
 				}
 			}
+			var perm os.FileMode
+			if stat != nil {
+				perm = stat.Mode().Perm()
+			} else {
+				perm = 0644
+			}
+			if err := os.WriteFile(target, file.Body, perm); err != nil {
+				return err
+			}
 		}
 	}
-	if err := os.Chmod(self, 0755); err != nil {
-		return err
+	s.Printf("Starting %s", s.Name)
+	if runtime.GOOS == "darwin" {
+		if err := s.reload(); err != nil {
+			return err
+		}
+	} else {
+		if err := s.Start(); err != nil {
+			return err
+		}
 	}
-	if err := s.Restart(); err != nil {
-		return err
-	}
-	if _, err := os.Stat(self + "~"); err == nil {
-		return os.Remove(self + "~")
+	if _, err := os.Stat(selfTmp); err == nil {
+		return os.Remove(selfTmp)
 	}
 	return nil
 }

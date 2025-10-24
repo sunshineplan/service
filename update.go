@@ -42,7 +42,7 @@ func (s *Service) Update() error {
 	if _, err := pb.FromReader(resp.Body, &buf); err != nil {
 		return err
 	}
-	pb.Done()
+	pb.Wait()
 
 	b := buf.Bytes()
 	var files []archive.File

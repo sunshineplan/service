@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/sunshineplan/progressbar"
 	"github.com/sunshineplan/utils/archive"
-	"github.com/sunshineplan/utils/progressbar"
 )
 
 // Update updates the service's installed files.

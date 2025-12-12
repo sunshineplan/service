@@ -86,7 +86,7 @@ func (s *Service) Install() error {
 		return err
 	}
 
-	return run("launchctl", "bootstrap", "gui/"+strconv.Itoa(os.Getuid()), plistPath)
+	return runCommand("launchctl", "bootstrap", "gui/"+strconv.Itoa(os.Getuid()), plistPath)
 }
 
 // Uninstall uninstalls the service.
@@ -131,9 +131,9 @@ func (s *Service) reload() error {
 	if err := s.launchctl("bootout"); err != nil {
 		return err
 	}
-	return run("launchctl", "bootstrap", "gui/"+strconv.Itoa(os.Getuid()), plistPath)
+	return runCommand("launchctl", "bootstrap", "gui/"+strconv.Itoa(os.Getuid()), plistPath)
 }
 
 func (s *Service) launchctl(arg ...string) error {
-	return run("launchctl", append(arg, s.target())...)
+	return runCommand("launchctl", append(arg, s.target())...)
 }

@@ -10,8 +10,7 @@ import (
 	"syscall"
 )
 
-// Run runs the service.
-func (s *Service) Run() error {
+func (s *Service) run() error {
 	if s.Exec == nil {
 		return ErrNoExcute
 	}

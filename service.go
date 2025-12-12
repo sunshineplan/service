@@ -1,8 +1,11 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/exec"
 
@@ -17,12 +20,13 @@ var defaultName = "Service"
 // Service represents a service.
 type Service struct {
 	*log.Logger
-	Name     string
-	Desc     string
-	Exec     func() error
-	Kill     func() error
-	TestExec func() error
-	Options  Options
+	Name      string
+	Desc      string
+	Exec      func() error
+	Kill      func() error
+	TestExec  func() error
+	Options   Options
+	DebugAddr string
 
 	commands []string
 	m        map[string]command
@@ -55,6 +59,12 @@ func (s *Service) SetLogger(file, prefix string, flag int) *Service {
 	return s
 }
 
+// SetDebug sets debug address for pprof.
+func (s *Service) SetDebug(addr string) *Service {
+	s.DebugAddr = addr
+	return s
+}
+
 // Test tests the service.
 func (s *Service) Test() (err error) {
 	if s.TestExec != nil {
@@ -69,12 +79,33 @@ func (s *Service) Test() (err error) {
 	return
 }
 
+// Run runs the service.
+func (s *Service) Run() error {
+	if s.DebugAddr != "" {
+		mux := http.NewServeMux()
+		mux.HandleFunc("/debug/pprof/", pprof.Index)
+		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+		var server *http.Server
+		go func() {
+			server = &http.Server{Addr: s.DebugAddr, Handler: mux}
+			if err := server.ListenAndServe(); err != http.ErrServerClosed {
+				s.Println("Failed to start debug server:", err)
+			}
+		}()
+		defer server.Shutdown(context.Background())
+	}
+	return s.run()
+}
+
 // Remove is an alias for Uninstall.
 func (s *Service) Remove() error {
 	return s.Uninstall()
 }
 
-func run(name string, arg ...string) error {
+func runCommand(name string, arg ...string) error {
 	cmd := exec.Command(name, arg...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

@@ -103,5 +103,5 @@ func (s *Service) reload() error {
 }
 
 func (s *Service) systemctl(action string) error {
-	return run("systemctl", action, strings.ToLower(s.Name))
+	return runCommand("systemctl", action, strings.ToLower(s.Name))
 }

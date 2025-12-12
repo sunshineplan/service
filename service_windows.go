@@ -64,8 +64,7 @@ func (s *Service) Uninstall() error {
 	return s.sc("delete")
 }
 
-// Run runs the service.
-func (s *Service) Run() error {
+func (s *Service) run() error {
 	if s.Exec == nil {
 		return ErrNoExcute
 	}
@@ -106,7 +105,7 @@ func (s *Service) reload() error {
 }
 
 func (s *Service) sc(action string, arg ...string) error {
-	return run("sc", append([]string{action, s.Name}, arg...)...)
+	return runCommand("sc", append([]string{action, s.Name}, arg...)...)
 }
 
 // IsWindowsService reports whether the process is currently executing

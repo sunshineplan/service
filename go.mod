@@ -5,7 +5,7 @@ go 1.25
 require (
 	github.com/sunshineplan/progressbar v1.0.1
 	github.com/sunshineplan/utils v0.1.83
-	golang.org/x/sys v0.40.0
+	golang.org/x/sys v0.41.0
 )
 
 require (

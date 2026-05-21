@@ -6,5 +6,5 @@ github.com/sunshineplan/progressbar v1.0.1 h1:elihSbf9rtXthvbcJkveg40yu4LrpV3SKJ
 github.com/sunshineplan/progressbar v1.0.1/go.mod h1:jYAymBnBOVIQlJS6IuPzXpzmNaq3sLjdtAVmF74Ugak=
 github.com/sunshineplan/utils v0.1.84 h1:RMZK73sz8THyQueGn5qxu0+Bh+4QvSf+Z+OEikVZKyY=
 github.com/sunshineplan/utils v0.1.84/go.mod h1:K5M8sNh+F47+aHfABZIiFJHVhC2DhiNhGZ9SgBQPPdE=
-golang.org/x/sys v0.44.0 h1:ildZl3J4uzeKP07r2F++Op7E9B29JRUy+a27EibtBTQ=
-golang.org/x/sys v0.44.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
+golang.org/x/sys v0.45.0 h1:dO4czNzziLiiXplLQgBCEpCvXQ3dnkn0SdaZSYdQ+FY=
+golang.org/x/sys v0.45.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
